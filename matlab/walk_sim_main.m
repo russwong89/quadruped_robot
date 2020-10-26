@@ -3,9 +3,9 @@ close all
 clear
 clc
 
-leg1 = create_robot_leg('1', [pi/4, pi/4, -pi/2], [0, 0, 0], [0, 0.5, 0], [0, 0.5, 0]);
-showdetails(leg1);
+robot = create_robot_body(0.3, [0, 0, 0], [0, 0.5, 0], [0, 0.5, 0]);
+showdetails(robot);
 
 % Plot home configuration
 figure;
-show(leg1, homeConfiguration(leg1));
+show(robot, homeConfiguration(robot));

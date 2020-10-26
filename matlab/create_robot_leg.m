@@ -1,4 +1,4 @@
-function robot_leg = create_robot_leg(index, home_positions, shoulder_to_thigh_tform, thigh_to_calf_tform, calf_to_foot_tform)
+function robot_leg = create_robot_leg(index, home_positions, base_to_shoulder_tform, shoulder_to_thigh_tform, thigh_to_calf_tform, calf_to_foot_tform)
     robot_leg = robotics.RigidBodyTree;
     robot_leg.Gravity = [0, 0. -9.81];
     robot_leg.DataFormat = 'row';
@@ -7,7 +7,7 @@ function robot_leg = create_robot_leg(index, home_positions, shoulder_to_thigh_t
     shoulder = robotics.RigidBody(append('shoulder', index));
     shoulder_joint = robotics.Joint(append('shoulder_joint', index), 'revolute');
     shoulder_joint.HomePosition = home_positions(1);
-    shoulder_joint_tform = trvec2tform([0, 0, 0]);
+    shoulder_joint_tform = trvec2tform(base_to_shoulder_tform);
     setFixedTransform(shoulder_joint, shoulder_joint_tform);
     shoulder_joint.JointAxis = [0, 0, 1];
     shoulder.Joint = shoulder_joint;
