@@ -9,9 +9,98 @@ ROBOT_RADIUS = 0.3;
 ROBOT_THIGH_LENGTH = 0.5;
 ROBOT_CALF_LENGTH = 0.5;
 
+% Trajectory params
+STRIDE_TYPE = StrideTypes.MOVE_FORWARD;
+FULL_STRIDE_LENGTH = 0.2;
+FULL_STRIDE_ARC_LENGTH = 0.15;
+STEP_HEIGHT = 0.1;
+FULL_STRIDE_TIME = 1;
+TIME_DELTA = 0.05;
+NUM_CYCLES = 5;
+
+% Simulation Params
+FPS = 30;
+
 % Create robot model
 robot = create_robot_body(ROBOT_RADIUS, [0, 0, 0], [0, ROBOT_THIGH_LENGTH, 0], [0, ROBOT_CALF_LENGTH, 0]);
 showdetails(robot);
 
 figure;
 show(robot, homeConfiguration(robot));
+
+% Create relative paths
+[lift_path, drag_path] = create_foot_path(STRIDE_TYPE, FULL_STRIDE_LENGTH, FULL_STRIDE_ARC_LENGTH, STEP_HEIGHT, FULL_STRIDE_TIME, TIME_DELTA);
+
+% Inverse Kinematics
+q0 = homeConfiguration(robot);
+num_dof = length(q0);
+num_timesteps_per_path = size(lift_path, 1);
+qs = zeros(NUM_CYCLES*2*num_timesteps_per_path, num_dof);
+ik = robotics.InverseKinematics('RigidBodyTree', robot);
+weights = [0, 0, 0, 1, 1, 1];
+for i = 1:NUM_CYCLES
+    % First half-cycle: lift legs 1 and 3
+    foot1_start_pos = get_pos(robot, q0, 'foot1');
+    foot2_start_pos = get_pos(robot, q0, 'foot2');
+    foot3_start_pos = get_pos(robot, q0, 'foot3');
+    foot4_start_pos = get_pos(robot, q0, 'foot4');
+    q_init = q0; 
+    for j = 1:num_timesteps_per_path
+        % Define destination points for each foot
+        foot1_dest_pos = lift_path(j,:) + foot1_start_pos;
+        foot2_dest_pos = drag_path(j,:) + foot2_start_pos;
+        foot3_dest_pos = lift_path(j,:) + foot3_start_pos;
+        foot4_dest_pos = drag_path(j,:) + foot4_start_pos;
+
+        % Run IK for each foot
+        q_sol1 = ik('foot1', trvec2tform(foot1_dest_pos), weights, q_init); % indices 1:3 are relevant to foot1
+        q_sol2 = ik('foot2', trvec2tform(foot2_dest_pos), weights, q_init); % indices 4:6 are relevant to foot2
+        q_sol3 = ik('foot3', trvec2tform(foot3_dest_pos), weights, q_init); % indices 7:9 are relevant to foot3
+        q_sol4 = ik('foot4', trvec2tform(foot4_dest_pos), weights, q_init); % indices 10:12 are relevant to foot4
+
+        % Add solution to the qs solution matrix
+        q_sol = [q_sol1(1:3), q_sol2(4:6), q_sol3(7:9), q_sol4(10:12)];
+        idx = 2*num_timesteps_per_path*(i-1)+j;
+        qs(idx,:) = q_sol;
+        q_init = q_sol;
+    end
+
+    % Second half-cycle: lift legs 2 and 4
+    foot1_start_pos = get_pos(robot, q_init, 'foot1');
+    foot2_start_pos = get_pos(robot, q_init, 'foot2');
+    foot3_start_pos = get_pos(robot, q_init, 'foot3');
+    foot4_start_pos = get_pos(robot, q_init, 'foot4');
+    for j = 1:num_timesteps_per_path
+        % Define destination points for each foot
+        foot1_dest_pos = drag_path(j,:) + foot1_start_pos;
+        foot2_dest_pos = lift_path(j,:) + foot2_start_pos;
+        foot3_dest_pos = drag_path(j,:) + foot3_start_pos;
+        foot4_dest_pos = lift_path(j,:) + foot4_start_pos;
+
+        % Run IK for each foot
+        q_sol1 = ik('foot1', trvec2tform(foot1_dest_pos), weights, q_init); % indices 1:3 are relevant to foot1
+        q_sol2 = ik('foot2', trvec2tform(foot2_dest_pos), weights, q_init); % indices 4:6 are relevant to foot2
+        q_sol3 = ik('foot3', trvec2tform(foot3_dest_pos), weights, q_init); % indices 7:9 are relevant to foot3
+        q_sol4 = ik('foot4', trvec2tform(foot4_dest_pos), weights, q_init); % indices 10:12 are relevant to foot4
+
+        % Add solution to the qs solution matrix
+        q_sol = [q_sol1(1:3), q_sol2(4:6), q_sol3(7:9), q_sol4(10:12)];
+        idx = 2*num_timesteps_per_path*(i-1)+j+num_timesteps_per_path;
+        qs(idx,:) = q_sol;
+        q_init = q_sol;
+    end
+end
+
+% Plotting and simulation
+fps_rate = rateControl(FPS);
+w = 0;
+while w == 0
+    w = waitforbuttonpress;
+end
+init_campos = campos;
+for i = 1:size(qs,1)
+    show(robot, qs(i,:), 'PreservePlot', false);
+    campos(init_campos);
+    drawnow
+    waitfor(fps_rate);
+end
