@@ -16,7 +16,7 @@ FULL_STRIDE_ARC_LENGTH = 0.15;
 STEP_HEIGHT = 0.1;
 FULL_STRIDE_TIME = 1;
 TIME_DELTA = 0.05;
-NUM_CYCLES = 5;
+NUM_CYCLES = 3;
 
 % Simulation Params
 FPS = 30;
@@ -27,9 +27,13 @@ showdetails(robot);
 
 figure;
 show(robot, homeConfiguration(robot));
+hold on;
+temp = get_pos(robot, homeConfiguration(robot), 'foot1');
+foot_rad = temp(1)*sqrt(2);
+ezplot(@(x,y) (x).^2 + (y).^2 - foot_rad^2);
 
 % Create relative paths
-[lift_path, drag_path] = create_foot_path(STRIDE_TYPE, FULL_STRIDE_LENGTH, FULL_STRIDE_ARC_LENGTH, STEP_HEIGHT, FULL_STRIDE_TIME, TIME_DELTA);
+[lift_path, drag_path] = create_foot_path(STRIDE_TYPE, FULL_STRIDE_LENGTH, FULL_STRIDE_ARC_LENGTH, ROBOT_RADIUS, STEP_HEIGHT, FULL_STRIDE_TIME, TIME_DELTA);
 
 % Inverse Kinematics
 q0 = homeConfiguration(robot);
@@ -47,10 +51,19 @@ for i = 1:NUM_CYCLES
     q_init = q0; 
     for j = 1:num_timesteps_per_path
         % Define destination points for each foot
-        foot1_dest_pos = lift_path(j,:) + foot1_start_pos;
-        foot2_dest_pos = drag_path(j,:) + foot2_start_pos;
-        foot3_dest_pos = lift_path(j,:) + foot3_start_pos;
-        foot4_dest_pos = drag_path(j,:) + foot4_start_pos;
+        if STRIDE_TYPE == StrideTypes.MOVE_FORWARD || STRIDE_TYPE == StrideTypes.MOVE_BACKWARD
+            % Rectangular coordinates
+            foot1_dest_pos = lift_path(j,:) + foot1_start_pos;
+            foot2_dest_pos = drag_path(j,:) + foot2_start_pos;
+            foot3_dest_pos = lift_path(j,:) + foot3_start_pos;
+            foot4_dest_pos = drag_path(j,:) + foot4_start_pos;
+        else
+            % Cylindrical coordinates
+            foot1_dest_pos = pol_plus_cart(lift_path(j,:), foot1_start_pos);
+            foot2_dest_pos = pol_plus_cart(drag_path(j,:), foot2_start_pos);
+            foot3_dest_pos = pol_plus_cart(lift_path(j,:), foot3_start_pos);
+            foot4_dest_pos = pol_plus_cart(drag_path(j,:), foot4_start_pos);
+        end
 
         % Run IK for each foot
         q_sol1 = ik('foot1', trvec2tform(foot1_dest_pos), weights, q_init); % indices 1:3 are relevant to foot1
@@ -72,10 +85,20 @@ for i = 1:NUM_CYCLES
     foot4_start_pos = get_pos(robot, q_init, 'foot4');
     for j = 1:num_timesteps_per_path
         % Define destination points for each foot
-        foot1_dest_pos = drag_path(j,:) + foot1_start_pos;
-        foot2_dest_pos = lift_path(j,:) + foot2_start_pos;
-        foot3_dest_pos = drag_path(j,:) + foot3_start_pos;
-        foot4_dest_pos = lift_path(j,:) + foot4_start_pos;
+        if STRIDE_TYPE == StrideTypes.MOVE_FORWARD || STRIDE_TYPE == StrideTypes.MOVE_BACKWARD
+            % Rectangular coordinates
+            foot1_dest_pos = drag_path(j,:) + foot1_start_pos;
+            foot2_dest_pos = lift_path(j,:) + foot2_start_pos;
+            foot3_dest_pos = drag_path(j,:) + foot3_start_pos;
+            foot4_dest_pos = lift_path(j,:) + foot4_start_pos;
+        else
+            % Cylindrical coordinates
+            foot1_dest_pos = pol_plus_cart(drag_path(j,:), foot1_start_pos);
+            foot2_dest_pos = pol_plus_cart(lift_path(j,:), foot2_start_pos);
+            foot3_dest_pos = pol_plus_cart(drag_path(j,:), foot3_start_pos);
+            foot4_dest_pos = pol_plus_cart(lift_path(j,:), foot4_start_pos);
+%             foot4_dest_pos = [1, 2, 3, 4];
+        end
 
         % Run IK for each foot
         q_sol1 = ik('foot1', trvec2tform(foot1_dest_pos), weights, q_init); % indices 1:3 are relevant to foot1
@@ -93,14 +116,18 @@ end
 
 % Plotting and simulation
 fps_rate = rateControl(FPS);
-w = 0;
-while w == 0
-    w = waitforbuttonpress;
-end
-init_campos = campos;
-for i = 1:size(qs,1)
-    show(robot, qs(i,:), 'PreservePlot', false);
-    campos(init_campos);
-    drawnow
-    waitfor(fps_rate);
+while true
+    w = 0;
+    while w == 0
+        w = waitforbuttonpress;
+    end
+    init_campos = campos;
+    for i = 1:size(qs,1)
+        show(robot, qs(i,:), 'PreservePlot', false);
+        hold on
+        campos(init_campos);
+        ezplot(@(x,y) (x).^2 + (y).^2 - foot_rad^2)
+        drawnow
+        waitfor(fps_rate);
+    end
 end
