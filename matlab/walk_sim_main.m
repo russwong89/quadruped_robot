@@ -5,15 +5,26 @@ clc
 
 % -------- PARAMETERS -------- %
 % Robot params
-ROBOT_RADIUS = 0.3;
-ROBOT_THIGH_LENGTH = 0.5;
-ROBOT_CALF_LENGTH = 0.5;
+ROBOT_RADIUS = 0.10106601718;
+% SHOULDER_TO_THIGH_TFORM = [0.0144, 0.0258, -0.0144];
+% THIGH_TO_CALF_TFORM = [0.0231, 0.0998, -0.0001];
+% CALF_TO_FOOT_TFORM = [-0.0373, 0.1700, 0.0496];
+SHOULDER_TO_THIGH_TFORM = [0.0144, 0.0258, -0.0144];
+THIGH_TO_CALF_TFORM = [0.0231, 0.0998, -0.0001];
+CALF_TO_FOOT_TFORM = [-0.0373, 0.1700, 0.0496];
+INITIAL_THIGH_ANGLE = pi/4;
+GROUND_DIST= 0.092; % Distance from ground to shoulder joint
+% Calculate calf angle so that home configuration touches the ground
+projected_calf_length_yz = sqrt(CALF_TO_FOOT_TFORM(2)*CALF_TO_FOOT_TFORM(2) + CALF_TO_FOOT_TFORM(3)*CALF_TO_FOOT_TFORM(3));
+projected_thigh_height_yz = sqrt(THIGH_TO_CALF_TFORM(2)*THIGH_TO_CALF_TFORM(2) + THIGH_TO_CALF_TFORM(3)*THIGH_TO_CALF_TFORM(3))*sin(INITIAL_THIGH_ANGLE + atan(THIGH_TO_CALF_TFORM(3) / THIGH_TO_CALF_TFORM(2)));
+calf_joint_height_above_ground = GROUND_DIST + SHOULDER_TO_THIGH_TFORM(3) + projected_thigh_height_yz;
+INITIAL_CALF_ANGLE = -(INITIAL_THIGH_ANGLE + atan(THIGH_TO_CALF_TFORM(3) / THIGH_TO_CALF_TFORM(2)) + pi/2 - acos(calf_joint_height_above_ground / projected_calf_length_yz) + atan(CALF_TO_FOOT_TFORM(3) / CALF_TO_FOOT_TFORM(2)));
 
 % Trajectory params
 STRIDE_TYPE = StrideTypes.MOVE_FORWARD;
-FULL_STRIDE_LENGTH = 0.2;
+FULL_STRIDE_LENGTH = 0.05;
 FULL_STRIDE_ARC_LENGTH = 0.15;
-STEP_HEIGHT = 0.1;
+STEP_HEIGHT = 0.05;
 FULL_STRIDE_TIME = 1;
 TIME_DELTA = 0.05;
 NUM_CYCLES = 3;
@@ -22,15 +33,15 @@ NUM_CYCLES = 3;
 FPS = 30;
 
 % Create robot model
-robot = create_robot_body(ROBOT_RADIUS, [0, 0, 0], [0, ROBOT_THIGH_LENGTH, 0], [0, ROBOT_CALF_LENGTH, 0]);
+robot = create_robot_body(ROBOT_RADIUS, SHOULDER_TO_THIGH_TFORM, THIGH_TO_CALF_TFORM, CALF_TO_FOOT_TFORM, INITIAL_THIGH_ANGLE, INITIAL_CALF_ANGLE);
 showdetails(robot);
 
 figure;
 show(robot, homeConfiguration(robot));
 hold on;
 temp = get_pos(robot, homeConfiguration(robot), 'foot1');
-foot_rad = temp(1)*sqrt(2);
-ezplot(@(x,y) (x).^2 + (y).^2 - foot_rad^2);
+% foot_rad = temp(1)*sqrt(2);
+% ezplot(@(x,y) (x).^2 + (y).^2 - foot_rad^2);
 
 % Create relative paths
 [lift_path, drag_path] = create_foot_path(STRIDE_TYPE, FULL_STRIDE_LENGTH, FULL_STRIDE_ARC_LENGTH, ROBOT_RADIUS, STEP_HEIGHT, FULL_STRIDE_TIME, TIME_DELTA);
@@ -126,8 +137,17 @@ while true
         show(robot, qs(i,:), 'PreservePlot', false);
         hold on
         campos(init_campos);
-        ezplot(@(x,y) (x).^2 + (y).^2 - foot_rad^2)
+%         ezplot(@(x,y) (x).^2 + (y).^2 - foot_rad^2)
         drawnow
         waitfor(fps_rate);
     end
+    min(qs(:,2))
+    max(qs(:,2))
+    min(qs(:,5))
+    max(qs(:,5))
+    min(qs(:,8))
+    max(qs(:,8))
+    min(qs(:,11))
+    max(qs(:,11))
+    
 end
