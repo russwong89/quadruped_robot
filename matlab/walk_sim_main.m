@@ -6,13 +6,10 @@ clc
 % -------- PARAMETERS -------- %
 % Robot params
 ROBOT_RADIUS = 0.10106601718;
-% SHOULDER_TO_THIGH_TFORM = [0.0144, 0.0258, -0.0144];
-% THIGH_TO_CALF_TFORM = [0.0231, 0.0998, -0.0001];
-% CALF_TO_FOOT_TFORM = [-0.0373, 0.1700, 0.0496];
 SHOULDER_TO_THIGH_TFORM = [0.0144, 0.0258, -0.0144];
 THIGH_TO_CALF_TFORM = [0.0231, 0.0998, -0.0001];
 CALF_TO_FOOT_TFORM = [-0.0373, 0.1700, 0.0496];
-INITIAL_THIGH_ANGLE = pi/4;
+INITIAL_THIGH_ANGLE = pi/4 - atan(THIGH_TO_CALF_TFORM(3) / THIGH_TO_CALF_TFORM(2));
 GROUND_DIST= 0.092; % Distance from ground to shoulder joint
 % Calculate calf angle so that home configuration touches the ground
 projected_calf_length_yz = sqrt(CALF_TO_FOOT_TFORM(2)*CALF_TO_FOOT_TFORM(2) + CALF_TO_FOOT_TFORM(3)*CALF_TO_FOOT_TFORM(3));
@@ -21,13 +18,13 @@ calf_joint_height_above_ground = GROUND_DIST + SHOULDER_TO_THIGH_TFORM(3) + proj
 INITIAL_CALF_ANGLE = -(INITIAL_THIGH_ANGLE + atan(THIGH_TO_CALF_TFORM(3) / THIGH_TO_CALF_TFORM(2)) + pi/2 - acos(calf_joint_height_above_ground / projected_calf_length_yz) + atan(CALF_TO_FOOT_TFORM(3) / CALF_TO_FOOT_TFORM(2)));
 
 % Trajectory params
-STRIDE_TYPE = StrideTypes.MOVE_FORWARD;
+STRIDE_TYPE = StrideTypes.ROTATE_CW;
 FULL_STRIDE_LENGTH = 0.05;
-FULL_STRIDE_ARC_LENGTH = 0.15;
-STEP_HEIGHT = 0.05;
+FULL_STRIDE_ARC_LENGTH = 0.05;
+STEP_HEIGHT = 0.03;
 FULL_STRIDE_TIME = 1;
-TIME_DELTA = 0.05;
-NUM_CYCLES = 3;
+TIME_DELTA = 0.015;
+NUM_CYCLES = 1;
 
 % Simulation Params
 FPS = 30;
@@ -124,6 +121,8 @@ for i = 1:NUM_CYCLES
         q_init = q_sol;
     end
 end
+
+save_qs_to_file(qs);
 
 % Plotting and simulation
 fps_rate = rateControl(FPS);
