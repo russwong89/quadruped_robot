@@ -21,7 +21,7 @@ License: MIT License with Commons Clause License Condition
 
 Licensor: Russell Wong (russwong89@gmail.com)
 
-==================================================================================
+---
 
 MIT License
 
