@@ -18,13 +18,13 @@ calf_joint_height_above_ground = GROUND_DIST + SHOULDER_TO_THIGH_TFORM(3) + proj
 INITIAL_CALF_ANGLE = -(INITIAL_THIGH_ANGLE + atan(THIGH_TO_CALF_TFORM(3) / THIGH_TO_CALF_TFORM(2)) + pi/2 - acos(calf_joint_height_above_ground / projected_calf_length_yz) + atan(CALF_TO_FOOT_TFORM(3) / CALF_TO_FOOT_TFORM(2)));
 
 % Trajectory params
-STRIDE_TYPE = StrideTypes.ROTATE_CW;
-FULL_STRIDE_LENGTH = 0.05;
-FULL_STRIDE_ARC_LENGTH = 0.05;
-STEP_HEIGHT = 0.03;
+STRIDE_TYPE = StrideTypes.MOVE_FORWARD;
+FULL_STRIDE_LENGTH = 0.07;
+FULL_STRIDE_ARC_LENGTH = 0.02;
+STEP_HEIGHT = 0.1;
 FULL_STRIDE_TIME = 1;
-TIME_DELTA = 0.015;
-NUM_CYCLES = 1;
+TIME_DELTA = 0.025;
+NUM_CYCLES = 3;
 
 % Simulation Params
 FPS = 30;
