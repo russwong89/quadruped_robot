@@ -17,7 +17,7 @@ License Condition notice.
 
 Software: https://github.com/russwong89/quadruped_robot
 
-License: MIT License with Commons Clause License Condition
+License: MIT License with Commons Clause License Condition (https://github.com/russwong89/quadruped_robot/blob/main/LICENSE.md)
 
 Licensor: Russell Wong (russwong89@gmail.com)
 
@@ -25,7 +25,8 @@ Licensor: Russell Wong (russwong89@gmail.com)
 
 MIT License
 
-Copyright (c) [2021] [Russell Wong]
+Copyright (c) 2021 Russell Wong (russwong89@gmail.com)
+
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
