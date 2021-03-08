@@ -38,12 +38,12 @@ void setup() {
 
 void loop() {
   while (Serial.available() > 0) {
-    int ms = Serial.parseInt();
-    if (ms > 2400 || ms < 600) {
+    int us = Serial.parseInt();
+    if (us > 2400 || us < 600) {
       Serial.println("Error: out of bounds");
     } else {
-      servo.writeMicroseconds(ms);
-      Serial.print("Wrote "); Serial.print(ms); Serial.println(" ms");
+      servo.writeMicroseconds(us);
+      Serial.print("Wrote "); Serial.print(us); Serial.println(" us");
     }
     do {
       Serial.read();
